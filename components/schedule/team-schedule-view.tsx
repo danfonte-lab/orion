@@ -404,7 +404,7 @@ export default function TeamScheduleView({ title, onBack }: TeamScheduleViewProp
                   >
                     {member.employeeName}
                   </Text>
-                  <Text className="font-sans text-base font-semibold text-neutral-dark dark:text-neutral-dark">
+                  <Text className="font-sans text-base font-semibold text-neutral-dark dark:text-[#F6EDE8]">
                     {member.timeLabel}
                   </Text>
                 </View>

@@ -24,6 +24,7 @@ type CalendarCell = {
 type ScheduleViewProps = {
   title: string;
   employeeId?: string;
+  scheduleSource?: "personal" | "team";
   onBack?: () => void;
 };
 
@@ -112,7 +113,12 @@ function buildMonthCells(monthDate: Date): CalendarCell[] {
   return cells;
 }
 
-export default function ScheduleView({ title, employeeId, onBack }: ScheduleViewProps) {
+export default function ScheduleView({
+  title,
+  employeeId,
+  scheduleSource = "personal",
+  onBack,
+}: ScheduleViewProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const scrollRef = useRef<ScrollView>(null);
@@ -161,7 +167,7 @@ export default function ScheduleView({ title, employeeId, onBack }: ScheduleView
       try {
         const response = await getWeekSchedule(
           new Date(weekStartEpoch),
-          employeeId ? { employeeId } : undefined,
+          employeeId ? { employeeId, source: scheduleSource } : undefined,
         );
         if (!mounted) return;
         setWeekDays(response.days);
@@ -179,7 +185,7 @@ export default function ScheduleView({ title, employeeId, onBack }: ScheduleView
     return () => {
       mounted = false;
     };
-  }, [employeeId, weekStartEpoch]);
+  }, [employeeId, scheduleSource, weekStartEpoch]);
 
   const scrollToDayIndex = useCallback(
     (dayIndex: number, animated = true) => {
@@ -411,7 +417,7 @@ export default function ScheduleView({ title, employeeId, onBack }: ScheduleView
                     <Text className="flex-1 font-sans text-xs font-bold uppercase text-neutral-dark/40 dark:text-white/40">
                       {day.fullDateLabel}
                     </Text>
-                    <Text className="font-sans text-base font-semibold text-neutral-dark dark:text-neutral-dark">
+                    <Text className="font-sans text-base font-semibold text-neutral-dark dark:text-[#F6EDE8]">
                       {day.timeLabel}
                     </Text>
                   </View>
@@ -428,7 +434,7 @@ export default function ScheduleView({ title, employeeId, onBack }: ScheduleView
                   <Text className="flex-1 font-sans text-xs font-bold uppercase text-neutral-dark/50 dark:text-white/50">
                     {day.fullDateLabel}
                   </Text>
-                  <Text className="font-sans text-base font-semibold text-neutral-dark dark:text-neutral-dark">
+                  <Text className="font-sans text-base font-semibold text-neutral-dark dark:text-[#F6EDE8]">
                     {day.timeLabel}
                   </Text>
                 </View>
