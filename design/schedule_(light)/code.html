@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ubiquity - My Schedule</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#FF5C39", // Apricot highlight
+                        "background-light": "#FDF7EA", // Vanilla
+                        "coffee": "#171512",
+                        "salt": "#FFFFFF",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["DM Sans", "sans-serif"],
+                        "serif": ["Instrument Serif", "serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #FDF7EA;
+            color: #171512;
+        }
+        .serif-title {
+            font-family: 'Instrument Serif', serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light min-h-screen flex flex-col">
+<!-- Header: Consistent top bar with Ubiquity logo -->
+<header class="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md border-b border-coffee/5 px-4 h-16 flex items-center justify-between">
+<div class="w-10">
+<span class="material-symbols-outlined text-coffee">menu</span>
+</div>
+<div class="flex-1 flex justify-center">
+<h2 class="text-xl font-bold tracking-tight text-coffee uppercase italic">Ubiquity</h2>
+</div>
+<div class="w-10 flex justify-end">
+<span class="material-symbols-outlined text-coffee">notifications</span>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Title: Instrument Serif -->
+<section class="px-5 pt-8 pb-4">
+<h1 class="serif-title text-4xl text-coffee">My Schedule</h1>
+</section>
+<!-- Date Selection: Horizontal weekly switcher -->
+<section class="px-5 mb-8 overflow-x-auto no-scrollbar flex gap-3 pb-2">
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-primary text-white shadow-lg shadow-primary/20">
+<span class="text-xs font-medium uppercase opacity-80">Mon</span>
+<span class="text-xl font-bold">08</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-salt text-coffee border border-coffee/5">
+<span class="text-xs font-medium uppercase opacity-60">Tue</span>
+<span class="text-xl font-bold">09</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-salt text-coffee border border-coffee/5">
+<span class="text-xs font-medium uppercase opacity-60">Wed</span>
+<span class="text-xl font-bold">10</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-salt text-coffee border border-coffee/5">
+<span class="text-xs font-medium uppercase opacity-60">Thu</span>
+<span class="text-xl font-bold">11</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-salt text-coffee border border-coffee/5">
+<span class="text-xs font-medium uppercase opacity-60">Fri</span>
+<span class="text-xl font-bold">12</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-salt text-coffee border border-coffee/5">
+<span class="text-xs font-medium uppercase opacity-60">Sat</span>
+<span class="text-xl font-bold">13</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[56px] h-20 rounded-2xl bg-salt text-coffee border border-coffee/5">
+<span class="text-xs font-medium uppercase opacity-60">Sun</span>
+<span class="text-xl font-bold">14</span>
+</div>
+</section>
+<!-- Schedule Details: Shift Cards -->
+<section class="px-5 space-y-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-coffee/40 mb-2">Upcoming Shifts</h3>
+<!-- Card 1: Active Shift -->
+<div class="bg-salt rounded-2xl p-5 shadow-sm border border-coffee/5">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-xs font-bold text-coffee/50 uppercase">Monday, Sep 08</p>
+<h4 class="text-2xl font-bold text-coffee mt-1">08:00 - 17:00</h4>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">ACT</span>
+</div>
+<div class="grid grid-cols-2 gap-y-4 pt-4 border-t border-coffee/5">
+<div>
+<p class="text-[10px] font-bold text-coffee/40 uppercase">Role</p>
+<p class="text-sm font-semibold text-coffee">Tier 1 Support</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-coffee/40 uppercase">Site</p>
+<p class="text-sm font-semibold text-coffee">AYL 4th Floor</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-coffee/40 uppercase">Team Leader</p>
+<p class="text-sm font-semibold text-coffee">Jake Oliva</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-coffee/40 uppercase">Breaks</p>
+<p class="text-xs font-medium text-coffee/70 leading-tight">Lunch: 12:00<br/>B1: 10:00, B2: 15:00</p>
+</div>
+</div>
+</div>
+<!-- Card 2: Off Day -->
+<div class="bg-salt/60 rounded-2xl p-5 border border-dashed border-coffee/20">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-xs font-bold text-coffee/40 uppercase">Tuesday, Sep 09</p>
+<h4 class="text-2xl font-bold text-coffee/40 mt-1">Rest Day</h4>
+</div>
+<span class="bg-coffee/10 text-coffee/40 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">OFF</span>
+</div>
+</div>
+<!-- Card 3: Another Active Shift -->
+<div class="bg-salt rounded-2xl p-5 shadow-sm border border-coffee/5">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-xs font-bold text-coffee/50 uppercase">Wednesday, Sep 10</p>
+<h4 class="text-2xl font-bold text-coffee mt-1">08:00 - 17:00</h4>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">ACT</span>
+</div>
+<div class="grid grid-cols-2 gap-y-4 pt-4 border-t border-coffee/5">
+<div>
+<p class="text-[10px] font-bold text-coffee/40 uppercase">Role</p>
+<p class="text-sm font-semibold text-coffee">Tier 1 Support</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-coffee/40 uppercase">Site</p>
+<p class="text-sm font-semibold text-coffee">AYL 4th Floor</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-coffee/40 uppercase">Team Leader</p>
+<p class="text-sm font-semibold text-coffee">Jake Oliva</p>
+</div>
+<div>
+<p class="text-[10px] font-bold text-coffee/40 uppercase">Breaks</p>
+<p class="text-xs font-medium text-coffee/70 leading-tight">Lunch: 13:00<br/>B1: 10:30, B2: 15:30</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Navigation: Bottom Navbar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-salt border-t border-coffee/5 px-6 pb-6 pt-3 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 text-coffee/40 transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-coffee/40 transition-colors" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Payslips</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined font-fill-1">calendar_month</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Schedule</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-coffee/40 transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+</a>
+</nav>
+<style>
+        /* Custom styles for Material Icons and specific UI tweaks */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .font-fill-1 {
+            font-variation-settings: 'FILL' 1;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</body></html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ubiquity HRIS - Newsfeed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#ff5d38",
+              "background-light": "#FDF7EA", // Vanilla
+              "background-dark": "#23130f",
+              "neutral-soft": "#8d665e",
+              "neutral-dark": "#181210",
+              "apricot": "#FF5C39",
+              "salt": "#FFFFFF",
+            },
+            fontFamily: {
+              "display": ["DM Sans", "sans-serif"],
+              "serif": ["Instrument Serif", "serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #FDF7EA;
+        }
+        .serif-heading {
+            font-family: 'Instrument Serif', serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light text-neutral-dark min-h-screen">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md border-b border-primary/10">
+<div class="flex items-center justify-between px-4 py-3">
+<div class="flex items-center gap-2">
+<div class="size-10 flex items-center justify-center rounded-full bg-primary/10">
+<span class="material-symbols-outlined text-primary text-[24px]">menu</span>
+</div>
+</div>
+<h1 class="serif-heading text-2xl font-bold italic text-neutral-dark">Ubiquity</h1>
+<div class="flex items-center gap-3">
+<button class="relative size-10 flex items-center justify-center rounded-full bg-primary/5">
+<span class="material-symbols-outlined text-neutral-dark text-[24px]">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-primary rounded-full"></span>
+</button>
+</div>
+</div>
+</header>
+<main class="pb-24">
+<!-- Latest News Section (Featured) -->
+<section class="px-4 pt-6">
+<h2 class="serif-heading text-3xl mb-4">Latest News</h2>
+<div class="bg-salt rounded-xl overflow-hidden shadow-sm border border-primary/5">
+<div class="relative w-full aspect-[16/9] bg-center bg-cover" data-alt="People working happily in a modern office environment" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBLdRtbS7Z6psHBmhSN0pUcRpOe19jTVhN9KWxt8M6fQr08jddbfvzm1kbGav2z5FkWivJR0QJReaF5S-wbpes1BLE0RnwK-RYxWxwRNRZepdgdIlECjkuJPdCqwkllYrOpawAN-LPnKgvxzNlsuNstJzAJcUuttX9ERkc7ftbaQxEVTm_W2vyr1BcCZlGGEKaxRhSxcOu-BFBWcNna2reZMpb8_-DYEdJE5pRlL_WLUH0AXJ0bQ60DjihSitPj6aplfX68QEjBEw4');">
+<div class="absolute top-3 left-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                        Company Update
+                    </div>
+</div>
+<div class="p-5">
+<p class="text-neutral-soft text-sm font-medium mb-1">January 15, 2024</p>
+<h3 class="serif-heading text-2xl mb-3 leading-tight">New 2024 Benefits Package: Supporting Your Holistic Well-being</h3>
+<p class="text-neutral-soft text-base mb-5 leading-relaxed">
+                        We are excited to announce an updated benefits package designed to support your growth, health, and happiness starting this year.
+                    </p>
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        View Details
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Community Section (Horizontal Scroll) -->
+<section class="mt-8">
+<div class="flex items-center justify-between px-4 mb-4">
+<h2 class="serif-heading text-2xl">Community</h2>
+<a class="text-primary text-sm font-bold" href="#">See All</a>
+</div>
+<div class="flex gap-4 overflow-x-auto px-4 pb-4 no-scrollbar">
+<!-- Celebration Card 1 -->
+<div class="flex-none w-48 bg-salt p-4 rounded-xl border border-primary/5 shadow-sm text-center">
+<div class="relative inline-block mb-3">
+<img class="size-16 rounded-full object-cover border-2 border-primary/20" data-alt="Profile portrait of a smiling female employee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTP5xuv75zJOxLxYfy7Y1HgHcFCHl7D9HEYIMSBOBOIKL3gH8yee8iTcB8nXy3ESeAt4SeDW9G8hOrcz8K98XZo2vIzuHXRqnMB6iuXVRD-BO2RYhVZ6LB6Aayxp8jXOLvb0qWMqBShu5WxkfcCsySzIbjncP3V-73fxgYuxjVPdjPZnbNOwTRVOWZhfONPwdBkbsi3rc-mS13ti1XOCZNTLdaYgdbpfZ7cGrpitbnwmRrSJ76IDEdjg8NOPgL0Hyu5pk13J6deCI"/>
+<div class="absolute -bottom-1 -right-1 bg-primary text-white size-6 rounded-full flex items-center justify-center border-2 border-salt">
+<span class="material-symbols-outlined text-[14px] fill-1">cake</span>
+</div>
+</div>
+<p class="font-bold text-neutral-dark leading-tight">Sarah Jenkins</p>
+<p class="text-xs text-neutral-soft mb-3">Happy Birthday!</p>
+<button class="w-full py-1.5 text-xs font-bold border border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+                        Send Wishes
+                    </button>
+</div>
+<!-- Celebration Card 2 -->
+<div class="flex-none w-48 bg-salt p-4 rounded-xl border border-primary/5 shadow-sm text-center">
+<div class="relative inline-block mb-3">
+<img class="size-16 rounded-full object-cover border-2 border-primary/20" data-alt="Profile portrait of a smiling male employee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdkoDkwDcAy2imX0Cr60kAmKMOmKPVJwJs2Ey1K3paTA1IWFBe9iXJT1i8ByYxetZgIVCO-GXNq1uuHNLYiwFodonJd48Y682RWCDGNulutXXYf37XvOoff3q0xhCMAkigC_wye4K1cySlJ2HynxTl9yk0PSrF1pi-n3cntO-55oEE2Kh-f9ipaZ1zoHKxgFxZ-epZI5eJ1JHFx58c7r9KHX32d373A03LvUGCAZme3eTCajR2jo3OGvyhz4J3jqoG_0rylqrYNfw"/>
+<div class="absolute -bottom-1 -right-1 bg-primary text-white size-6 rounded-full flex items-center justify-center border-2 border-salt">
+<span class="material-symbols-outlined text-[14px] fill-1">workspace_premium</span>
+</div>
+</div>
+<p class="font-bold text-neutral-dark leading-tight">David Chen</p>
+<p class="text-xs text-neutral-soft mb-3">3 Year Anniversary</p>
+<button class="w-full py-1.5 text-xs font-bold border border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+                        Congratulate
+                    </button>
+</div>
+<!-- Celebration Card 3 -->
+<div class="flex-none w-48 bg-salt p-4 rounded-xl border border-primary/5 shadow-sm text-center">
+<div class="relative inline-block mb-3">
+<img class="size-16 rounded-full object-cover border-2 border-primary/20" data-alt="Profile portrait of a woman with curly hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyLFDKxVWMTTpfMtaqZWF0Q0P4EHm-TZWhQqrZ7VEgMokXKJvS-VC8IjxHhxKd2EfrD419lohOifXxp3YYt7YaVvwJTkilGBgnLLaT52JtV3O9wxPpOAr-KtM29ytnpLVaeyYlKFUeZe8KrPCV3VcVAJDAq-YQIXcj_wGxnU37jBguL9Z0gGZDFkOv9iBaKC2OC026ieHysxUoVz0-Cc4_FHcHR_XMgHhN4EoUYkm4l5Zhtk4rsLKGCuyvdJaDk68SZaM0xXYdqrE"/>
+<div class="absolute -bottom-1 -right-1 bg-primary text-white size-6 rounded-full flex items-center justify-center border-2 border-salt">
+<span class="material-symbols-outlined text-[14px] fill-1">celebration</span>
+</div>
+</div>
+<p class="font-bold text-neutral-dark leading-tight">Elena Rodriguez</p>
+<p class="text-xs text-neutral-soft mb-3">Just Joined!</p>
+<button class="w-full py-1.5 text-xs font-bold border border-primary text-primary rounded-full hover:bg-primary hover:text-white transition-colors">
+                        Say Hello
+                    </button>
+</div>
+</div>
+</section>
+<!-- Feed Items -->
+<section class="px-4 mt-8 space-y-6">
+<h2 class="serif-heading text-2xl mb-4">Daily Updates</h2>
+<!-- Feed Card 1 -->
+<div class="flex gap-4 p-3 bg-salt rounded-xl border border-primary/5 shadow-sm">
+<div class="w-24 h-24 flex-none rounded-lg bg-cover bg-center" data-alt="Colleagues discussing ideas around a table" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDz0ELtA7l89RohceUF-u0FV9Ve1K7r_0EEEL6NZo5Vxerr34rDrvBjpssrIY1bcdJW_xsNZ9TS1Wx2awbXz1sOm_BsqMcgNqtcLxDLs111TN9IC4RXastpbHIpEqdquxbtZKcATiqBnVfkhI-DrCYh8ntUy5zT0AImERZE0ha7rGRpLPduatcVKrju4x7cooSsTX5u1e3UsCbR-ZEO023aXVy0PTkquQ0NL44xken-Qk_fDi4WDpohIJENMAaqHkTXYR9LxMa6uEQ');"></div>
+<div class="flex flex-col justify-between py-1">
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Events</p>
+<h4 class="font-bold text-base leading-snug">Quarterly Town Hall Highlights: Q1 2024 Strategy</h4>
+</div>
+<p class="text-xs text-neutral-soft">2 hours ago</p>
+</div>
+</div>
+<!-- Feed Card 2 -->
+<div class="flex gap-4 p-3 bg-salt rounded-xl border border-primary/5 shadow-sm">
+<div class="w-24 h-24 flex-none rounded-lg bg-cover bg-center" data-alt="Bright and modern office lounge area" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA4_9wzSAgbTdS1b9zeiPTXLUcQMid7s4b8aZHPVxhB6PnIDEwBrhEiAvRFOtvJXBiuGDjqoqt_8Z4qeKeIBBCWaleiSlXV43rWcJhVKgqYb78dFH4RdhSskQlIzq0McwtA3QbPJy7DIHz1xka0DYVHk5sFJu0gRf7BVNCZJKlfd-wJ9JJd9RWkfexY-WKSftfEH_FZHIfiT6tSHlnkaCSRQmAuMbDBQvZ3H-YeANNT3DwHUGIJUlZbBP-Mj77gF08Us_a2NxtjCaY');"></div>
+<div class="flex flex-col justify-between py-1">
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Culture</p>
+<h4 class="font-bold text-base leading-snug">New Office Opening: Exploring our Chicago Hub</h4>
+</div>
+<p class="text-xs text-neutral-soft">Yesterday</p>
+</div>
+</div>
+<!-- Feed Card 3 -->
+<div class="flex gap-4 p-3 bg-salt rounded-xl border border-primary/5 shadow-sm">
+<div class="w-24 h-24 flex-none rounded-lg bg-cover bg-center" data-alt="A group of people high-fiving in a workshop" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDOG-C9jsXFTBsTZ1BHRFjgP_MEPy2nc65UscIS6JI1ySxKckGiD1B08kBmruoXCwkJbaHKimQ_DEtAp60EsamPAuGkY1Z1WST0BE8TRQn2SuMFSaExamw-6qA3w7BtHr6RP4uBSoJERu8CgO1KRJi7lPCl6Ee3mtpHDwc_7uJwh2krDcwsDuvNSipPBSqUgj6C4Dd3jlGycSJyFIPGtdER7Zs0VcBq9AKDYAEa0pgV_8kksdgCxN7966YNMg80X_-dYUx-x-Qf5Us');"></div>
+<div class="flex flex-col justify-between py-1">
+<div>
+<p class="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">People</p>
+<h4 class="font-bold text-base leading-snug">Employee of the Month: High Five to Mark!</h4>
+</div>
+<p class="text-xs text-neutral-soft">2 days ago</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-salt border-t border-primary/10 px-4 pb-6 pt-3 z-50">
+<div class="flex items-center justify-between max-w-md mx-auto">
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-neutral-soft group-hover:text-primary transition-colors">home</span>
+<span class="text-[10px] font-medium text-neutral-soft group-hover:text-primary">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-primary fill-1">newspaper</span>
+<span class="text-[10px] font-bold text-primary">News</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-neutral-soft group-hover:text-primary transition-colors">contacts</span>
+<span class="text-[10px] font-medium text-neutral-soft group-hover:text-primary">Directory</span>
+</a>
+<a class="flex flex-col items-center gap-1 group" href="#">
+<span class="material-symbols-outlined text-neutral-soft group-hover:text-primary transition-colors">account_circle</span>
+<span class="text-[10px] font-medium text-neutral-soft group-hover:text-primary">Profile</span>
+</a>
+</div>
+</nav>
+</body></html>

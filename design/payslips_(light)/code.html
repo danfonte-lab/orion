@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Payslip Viewer - Agent Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    // Brand Colors
+                    "vanilla": "#FDF7EA",
+                    "coffee": "#171512",
+                    "apricot": "#FF5C39",
+                    "peach": "#FEB09D",
+                    "salt": "#FFFFFF",
+                    "blackberry": "#521F28",
+                    "mint": "#E0ECDE", 
+                    "pistachio": "#575538",
+                    "toffee": "#C0A97E",
+                    // Functional Mappings
+                    "primary": "#171512", // Coffee as primary text/dark bg
+                    "accent": "#FF5C39", // Apricot for highlights
+                    "secondary": "#E0ECDE", // Mint for light cards
+                    "background-light": "#FDF7EA", // Vanilla
+                    "background-dark": "#171512", // Coffee
+                },
+                fontFamily: {
+                    "sans": ["DM Sans", "sans-serif"],
+                    "serif": ["Instrument Serif", "serif"],
+                    "display": ["Instrument Serif", "serif"],
+                    "body": ["DM Sans", "sans-serif"]
+                },
+                borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "2xl": "1.5rem", "full": "9999px"},
+            },
+        },
+    }
+</script>
+<style>
+    body {
+        min-height: max(884px, 100dvh);
+        background-color: #FDF7EA;}
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }h1, h2, h3, h4, h5, h6 {
+        font-family: 'Instrument Serif', serif;
+    }
+</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-vanilla text-coffee font-body antialiased">
+<div class="relative flex h-auto min-h-screen w-full flex-col max-w-md mx-auto bg-vanilla shadow-2xl overflow-hidden">
+<header class="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-vanilla border-b border-coffee/5 relative">
+<div class="w-12"></div>
+<div class="flex items-center gap-1 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+<span class="text-apricot font-bold text-2xl leading-none" style="margin-bottom: 2px;">:</span>
+<span class="font-sans font-bold text-xl tracking-tight text-coffee">ubiquity</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative text-coffee hover:text-apricot transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 size-2 bg-apricot rounded-full border border-vanilla"></span>
+</button>
+<div class="relative size-8 rounded-full bg-peach overflow-hidden ring-2 ring-coffee/10">
+<img alt="Profile" class="h-full w-full object-cover opacity-90 mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQNfvPzW7oB6_DIJQNAsCMdndG7tkPQoFwxhfh2L8hOUAiN_VWqp6lWFQxiDA9eHZQpf0vn2Z4ICC6LcehzZ3mQEMvN-cqyz0lEG5GrdOvasYELC1daCNxJhi9RONWRJhlmJTcAOcVp7eqiaFysBOQ-CgBi9KVB2BlwT3lc0fD8aEfp8kQ7cZdopj_C-nm9BquFzV5-S9Ny9GNw3FC_OD5uaqC3RqkPSgc50J9j-ciWsZji9JJv5OK2XUBji47HZWwz_AeTQOLVdM"/>
+</div>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-24 px-6 pt-6">
+<div class="mb-6">
+<p class="text-sm font-medium text-coffee/60 uppercase tracking-widest font-sans mb-1">Welcome back</p>
+<h1 class="text-[32px] text-coffee leading-none font-serif">Sarah Jenkins</h1>
+</div>
+<section class="mb-8">
+<div class="flex items-end justify-between mb-4">
+<h2 class="text-xl font-sans font-bold text-coffee tracking-tight">Latest Payslip</h2>
+</div>
+<div class="bg-coffee rounded-2xl p-6 text-vanilla shadow-xl relative overflow-hidden group">
+<div class="absolute -right-16 -top-16 size-48 rounded-full bg-pistachio/20 blur-3xl group-hover:bg-pistachio/30 transition-all duration-700"></div>
+<div class="absolute -left-12 -bottom-12 size-40 rounded-full bg-blackberry/30 blur-2xl group-hover:bg-blackberry/40 transition-all duration-700"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-2 text-vanilla/90 bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<p class="text-xs font-sans font-medium tracking-wide">Oct 1 - Oct 31, 2023</p>
+</div>
+<span class="bg-mint text-coffee px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+<div class="mb-8">
+<p class="text-vanilla/60 text-xs font-medium uppercase tracking-widest mb-2 font-sans">Total Net Pay</p>
+<h3 class="text-5xl tracking-tight text-white font-serif">$4,250.00</h3>
+</div>
+<div class="grid grid-cols-3 gap-4 pt-6 border-t border-white/10">
+<div>
+<p class="text-vanilla/50 text-[10px] uppercase font-bold tracking-wider mb-1 font-sans">Gross</p>
+<p class="text-sm font-bold text-white font-sans">$5,500</p>
+</div>
+<div>
+<p class="text-vanilla/50 text-[10px] uppercase font-bold tracking-wider mb-1 font-sans">Tax</p>
+<p class="text-sm font-bold text-peach font-sans">-$800</p>
+</div>
+<div>
+<p class="text-vanilla/50 text-[10px] uppercase font-bold tracking-wider mb-1 font-sans">Deductions</p>
+<p class="text-sm font-bold text-peach font-sans">-$450</p>
+</div>
+</div>
+<button class="w-full mt-6 bg-apricot text-coffee rounded-xl py-3.5 text-sm font-bold flex items-center justify-center gap-2 hover:bg-peach transition-colors font-sans shadow-lg shadow-apricot/20">
+<span class="material-symbols-outlined text-lg">receipt_long</span>
+                        Detailed Breakdown
+                    </button>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-sans font-bold text-coffee tracking-tight">History</h2>
+<button class="text-coffee/70 hover:text-apricot text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-colors font-sans">
+<span class="material-symbols-outlined text-sm">filter_list</span> Filter
+                </button>
+</div>
+<div class="space-y-3">
+<div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-coffee/5 shadow-sm hover:shadow-md hover:border-apricot/30 transition-all cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-full bg-secondary flex items-center justify-center text-coffee transition-colors group-hover:bg-apricot group-hover:text-white">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-lg font-serif text-coffee leading-none mb-1">September 2023</p>
+<p class="text-xs text-coffee/60 font-medium font-sans flex items-center gap-1.5">
+<span class="size-1.5 rounded-full bg-pistachio"></span>
+                                Net Pay: $4,250.00
+                            </p>
+</div>
+</div>
+<div class="size-8 flex items-center justify-center rounded-full text-coffee/30 group-hover:text-apricot transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+</div>
+<div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-coffee/5 shadow-sm hover:shadow-md hover:border-apricot/30 transition-all cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-full bg-secondary flex items-center justify-center text-coffee transition-colors group-hover:bg-apricot group-hover:text-white">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-lg font-serif text-coffee leading-none mb-1">August 2023</p>
+<p class="text-xs text-coffee/60 font-medium font-sans flex items-center gap-1.5">
+<span class="size-1.5 rounded-full bg-pistachio"></span>
+                                Net Pay: $4,120.50
+                            </p>
+</div>
+</div>
+<div class="size-8 flex items-center justify-center rounded-full text-coffee/30 group-hover:text-apricot transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+</div>
+<div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-coffee/5 shadow-sm hover:shadow-md hover:border-apricot/30 transition-all cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-full bg-secondary flex items-center justify-center text-coffee transition-colors group-hover:bg-apricot group-hover:text-white">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-lg font-serif text-coffee leading-none mb-1">July 2023</p>
+<p class="text-xs text-coffee/60 font-medium font-sans flex items-center gap-1.5">
+<span class="size-1.5 rounded-full bg-pistachio"></span>
+                                Net Pay: $4,250.00
+                            </p>
+</div>
+</div>
+<div class="size-8 flex items-center justify-center rounded-full text-coffee/30 group-hover:text-apricot transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+</div>
+<div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-coffee/5 shadow-sm hover:shadow-md hover:border-apricot/30 transition-all cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-full bg-secondary flex items-center justify-center text-coffee transition-colors group-hover:bg-apricot group-hover:text-white">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-lg font-serif text-coffee leading-none mb-1">June 2023</p>
+<p class="text-xs text-coffee/60 font-medium font-sans flex items-center gap-1.5">
+<span class="size-1.5 rounded-full bg-pistachio"></span>
+                                Net Pay: $3,980.00
+                            </p>
+</div>
+</div>
+<div class="size-8 flex items-center justify-center rounded-full text-coffee/30 group-hover:text-apricot transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+</div>
+<div class="bg-white p-4 rounded-2xl flex items-center justify-between border border-coffee/5 shadow-sm hover:shadow-md hover:border-apricot/30 transition-all cursor-pointer group opacity-75">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-full bg-secondary flex items-center justify-center text-coffee transition-colors group-hover:bg-apricot group-hover:text-white">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-lg font-serif text-coffee leading-none mb-1">May 2023</p>
+<p class="text-xs text-coffee/60 font-medium font-sans flex items-center gap-1.5">
+<span class="size-1.5 rounded-full bg-pistachio"></span>
+                                Net Pay: $4,250.00
+                            </p>
+</div>
+</div>
+<div class="size-8 flex items-center justify-center rounded-full text-coffee/30 group-hover:text-apricot transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-4 text-sm font-bold text-coffee/60 hover:text-apricot hover:bg-apricot/5 rounded-xl transition-colors border border-dashed border-coffee/20 font-sans tracking-wide uppercase">
+                Load Older History
+            </button>
+</section>
+</main>
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md border-t border-coffee/10 bg-vanilla/95 backdrop-blur-xl px-6 pb-6 pt-4 flex items-center justify-between z-20">
+<a class="flex flex-col items-center justify-center gap-1.5 text-coffee/40 hover:text-apricot transition-colors group" href="#">
+<div class="px-4 py-1 rounded-full group-hover:bg-apricot/10 transition-colors">
+<span class="material-symbols-outlined text-[26px]">home</span>
+</div>
+<p class="text-[9px] font-bold uppercase tracking-widest font-sans">Home</p>
+</a>
+<a class="flex flex-col items-center justify-center gap-1.5 text-apricot transition-colors group" href="#">
+<div class="px-4 py-1 rounded-full bg-apricot/10 transition-colors">
+<span class="material-symbols-outlined text-[26px]" style="font-variation-settings: 'FILL' 1">description</span>
+</div>
+<p class="text-[9px] font-bold uppercase tracking-widest font-sans">Payslips</p>
+</a>
+<a class="flex flex-col items-center justify-center gap-1.5 text-coffee/40 hover:text-apricot transition-colors group" href="#">
+<div class="px-4 py-1 rounded-full group-hover:bg-apricot/10 transition-colors">
+<span class="material-symbols-outlined text-[26px]">calendar_today</span>
+</div>
+<p class="text-[9px] font-bold uppercase tracking-widest font-sans">Time Off</p>
+</a>
+<a class="flex flex-col items-center justify-center gap-1.5 text-coffee/40 hover:text-apricot transition-colors group" href="#">
+<div class="px-4 py-1 rounded-full group-hover:bg-apricot/10 transition-colors">
+<span class="material-symbols-outlined text-[26px]">person</span>
+</div>
+<p class="text-[9px] font-bold uppercase tracking-widest font-sans">Profile</p>
+</a>
+</nav>
+</div>
+</body></html>
