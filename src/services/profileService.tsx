@@ -8,8 +8,6 @@ import { captureException } from "@/src/monitoring/sentry";
 import axios from "axios";
 import apiClient from "./apiClient";
 
-const API_URL = (process.env.EXPO_PUBLIC_API_URL || "").replace(/\/+$/, "");
-
 export type EmployeeProfileResponse = {
   is_pending?: boolean;
   is_sent_back?: boolean;
@@ -51,10 +49,6 @@ let cachedEmployeeProfile: EmployeeProfileResponse | null = null;
 export async function getEmployeeProfile(
   accessToken?: string,
 ): Promise<EmployeeProfileResponse> {
-  if (!API_URL) {
-    throw new Error("EXPO_PUBLIC_API_URL is not set");
-  }
-
   const url = "/mobile/api/employee/profile/";
   try {
     const res = await apiClient.get<EmployeeProfileResponse>(url, {
@@ -92,9 +86,6 @@ export async function getEmployeeManager(
   employeeId: string,
   accessToken?: string,
 ): Promise<EmployeeManagerResponse> {
-  if (!API_URL) {
-    throw new Error("EXPO_PUBLIC_API_URL is not set");
-  }
   if (!employeeId) {
     throw new Error("Missing employee_id");
   }

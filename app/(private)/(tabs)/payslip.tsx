@@ -372,11 +372,10 @@ export default function PayslipScreen() {
         </View>
       )}
 
-      <View className="mt-8 mb-3 flex-row items-center justify-between">
+      <View className="mt-8 mb-3">
         <Text className="font-sans text-lg font-bold text-neutral-dark dark:text-[#F6EDE8]">
           Recent History
         </Text>
-        <Text className="font-sans text-sm font-bold text-primary">See All</Text>
       </View>
     </View>
   );

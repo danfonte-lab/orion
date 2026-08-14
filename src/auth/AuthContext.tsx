@@ -10,25 +10,37 @@ import React, {
 
 import {
   clearStoredTokens,
+  clearStoredAccessToken,
   clearStoredUser,
   clearSessionNotice,
+  clearHasSeenOnboarding,
+  clearUseBiometrics,
   getHasSeenOnboarding,
+  getStoredAccessTokenExpiry,
   getStoredTokens,
+  getStoredRefreshToken,
   getStoredUser,
   getUseBiometrics,
   setHasSeenOnboarding,
   setSessionNotice,
   setStoredTokens,
   setStoredUser,
+  clearThemePreference,
   setUseBiometrics,
 } from "@/src/auth/auth-storage";
 import { registerSessionExpiredHandler } from "@/src/auth/auth-session";
 import { captureException } from "@/src/monitoring/sentry";
 import { clearRoutesConfigCache } from "@/src/services/accessControlService";
+import {
+  clearApiBaseUrlOverride,
+  setApiBaseUrlForUsername,
+} from "@/src/services/apiBaseUrl";
+import { clearNewsFeedCache } from "@/src/services/newsFeedService";
 import { clearTaskCache } from "@/src/services/taskService";
+import { setAuthRequestTraceActive } from "@/src/services/apiClient";
 import { User } from "../models/user";
 import authService, { refreshAccessToken } from "../services/authService";
-import profileService from "../services/profileService";
+import profileService, { clearCachedEmployeeProfile } from "../services/profileService";
 
 type AuthContextValue = {
   // REQUIRED by spec
@@ -48,8 +60,21 @@ type AuthContextValue = {
   // Biometrics helpers
   isBiometricAvailable?: boolean;
   enableBiometrics?: (value: boolean) => Promise<void>;
+  clearAllAuthStorage?: () => Promise<void>;
+  finalizeClearedAuthState?: () => void;
+  clearAllAuthData?: () => Promise<void>;
   // Resume session using stored tokens (used by biometric sign-in)
-  resumeWithTokens?: () => Promise<boolean>;
+  resumeWithTokens?: () => Promise<
+    | { ok: true }
+    | {
+        ok: false;
+        reason:
+          | "biometrics_disabled"
+          | "missing_refresh_token"
+          | "missing_user"
+          | "refresh_failed";
+      }
+  >;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -66,18 +91,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function bootstrap() {
       try {
         // Authentication checks: read persisted values.
-        const [storedUser, seenOnboarding] = await Promise.all([
+        const [storedUser, seenOnboarding, storedTokens, biometrics] =
+          await Promise.all([
           getStoredUser(),
           getHasSeenOnboarding(),
+          getStoredTokens(),
+          getUseBiometrics(),
         ]);
 
         // Check if biometrics are enabled for this account
-        const biometrics = await getUseBiometrics();
         setIsBiometricAvailable(biometrics);
 
         if (!isMounted) return;
-        setUser(storedUser);
         setHasSeenOnboardingState(seenOnboarding);
+
+        const accessTokenExpiry = await getStoredAccessTokenExpiry();
+        const isAccessTokenValid =
+          Boolean(storedTokens?.accessToken) &&
+          Boolean(storedUser) &&
+          Boolean(accessTokenExpiry && accessTokenExpiry > Date.now());
+
+        if (isAccessTokenValid && storedUser) {
+          setApiBaseUrlForUsername(storedUser.username);
+          setAuthRequestTraceActive(true);
+          setUser(storedUser);
+          return;
+        }
+
+        if (storedTokens?.accessToken && accessTokenExpiry && accessTokenExpiry <= Date.now()) {
+          await clearStoredAccessToken();
+        }
       } catch (error) {
         captureException(error, {
           scope: "auth_context",
@@ -108,8 +151,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await setSessionNotice("Your session expired. Please sign in again.");
         await clearStoredUser();
         await clearStoredTokens();
+        clearCachedEmployeeProfile();
+        clearNewsFeedCache();
+        clearApiBaseUrlOverride();
         clearRoutesConfigCache();
         clearTaskCache();
+        setAuthRequestTraceActive(false);
       } catch (error) {
         captureException(error, {
           scope: "auth_context",
@@ -132,11 +179,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     //const isValid = email === "test@test.com" && password === "123456";
     setIsLoading(true);
     try {
+      clearCachedEmployeeProfile();
+      clearNewsFeedCache();
+      setApiBaseUrlForUsername(email);
+      setAuthRequestTraceActive(true);
       const res = await authService.authenticate(email, password);
       console.log("[auth] accessToken", res.tokens.accessToken);
-      if (!res.user) return false;
+      if (!res.user) {
+        setAuthRequestTraceActive(false);
+        return false;
+      }
 
       await clearSessionNotice();
+      clearRoutesConfigCache();
       clearTaskCache();
 
       // Persist fresh tokens before any authenticated follow-up request.
@@ -160,10 +215,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: displayName,
       };
       await setStoredUser(nextUser);
+      setApiBaseUrlForUsername(nextUser.username);
       setUser(nextUser);
       return true;
     } catch (err) {
       // Avoid partial auth state when post-login requests fail.
+      setAuthRequestTraceActive(false);
       await clearStoredTokens();
       await clearStoredUser();
       setUser(null);
@@ -183,17 +240,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // persist fails the UI won't change.
     try {
       await setUseBiometrics(value);
-      if (!value) {
-        try {
-          await clearStoredTokens();
-        } catch (e) {
-          captureException(e, {
-            scope: "auth_context",
-            action: "enable_biometrics_clear_tokens",
-            extras: { value },
-          });
-        }
-      }
       setIsBiometricAvailable(value);
     } catch (e) {
       captureException(e, {
@@ -242,78 +288,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const resumeWithTokens = useCallback(async (): Promise<boolean> => {
+  const resumeWithTokens = useCallback(async (): Promise<
+    | { ok: true }
+    | {
+        ok: false;
+        reason:
+          | "biometrics_disabled"
+          | "missing_refresh_token"
+          | "missing_user"
+          | "refresh_failed";
+      }
+  > => {
     // Attempt to resume session using stored tokens + user
     // console.debug("resumeWithTokens: starting");
     // Respect user's biometric opt-in flag: if they opted out, refuse to
     // resume with biometrics even if tokens exist on device.
     const biometricsEnabled = await getUseBiometrics();
     if (!biometricsEnabled) {
-      return false;
+      return { ok: false, reason: "biometrics_disabled" };
     }
-    // First try to read stored tokens. If none are present (could happen
-    // if tokens were cleared), try to recover a session using the stored
-    // user by issuing a dummy token set so the biometric flow can resume.
-    const tokens = await getStoredTokens();
-    // console.debug("resumeWithTokens: stored tokens:", tokens);
-
-    if (!tokens) {
-      return false;
-    }
-
-    // If tokens exist, ensure we have a valid access token (refresh if needed)
-    const token = await getValidAccessToken();
-    // console.debug("resumeWithTokens: getValidAccessToken returned:", token);
-    // If we couldn't refresh (no token), fail. Otherwise, ensure a stored
-    // user exists (create a fallback if necessary) and resume the in-memory
-    // session. This makes the biometric resume resilient to prior clear
-    // operations while preserving the refreshToken security model.
-    if (!token) {
-      return false;
-    }
-
     const storedUser = await getStoredUser();
-    if (!storedUser) return false;
+    if (!storedUser) return { ok: false, reason: "missing_user" };
 
-    // Ensure tokens reflect the refreshed access token we just obtained.
-    try {
-      const currentTokens = await getStoredTokens();
-      if (currentTokens) {
-        // If access token is empty (e.g., after logout) write a refreshed one.
-        if (!currentTokens.accessToken || currentTokens.accessToken === "") {
-          await setStoredTokens({
-            ...currentTokens,
-            accessToken: token,
-            accessTokenExpiry: Date.now() + 60_000,
-          });
-        }
+    const now = Date.now();
+    const activeTokens = await getStoredTokens();
+    if (!activeTokens || activeTokens.accessTokenExpiry <= now) {
+      const refreshToken = activeTokens?.refreshToken ?? (await getStoredRefreshToken());
+      if (!refreshToken) {
+        return { ok: false, reason: "missing_refresh_token" };
       }
-    } catch (e) {
-      captureException(e, {
-        scope: "auth_context",
-        action: "resume_with_tokens_sync_tokens",
-      });
+
+      try {
+        const refreshed = await refreshAccessToken(refreshToken);
+        await setStoredTokens({
+          accessToken: refreshed.accessToken,
+          refreshToken: refreshed.refreshToken,
+          accessTokenExpiry: now + 60_000,
+        });
+      } catch (e) {
+        captureException(e, {
+          scope: "auth_context",
+          action: "resume_with_tokens_refresh_failed",
+        });
+        return { ok: false, reason: "refresh_failed" };
+      }
     }
+
+    setApiBaseUrlForUsername(storedUser.username);
+    setAuthRequestTraceActive(true);
 
     setUser(storedUser);
-    return true;
-  }, [getValidAccessToken]);
+    return { ok: true };
+  }, []);
 
   const logout = async () => {
     setIsLoading(true);
     try {
+      clearApiBaseUrlOverride();
+      clearCachedEmployeeProfile();
+      clearNewsFeedCache();
       clearRoutesConfigCache();
       clearTaskCache();
-      // If biometrics are enabled, keep stored tokens so biometric sign-in
-      // can resume the session. Otherwise clear all persisted auth data.
       const biometricsEnabled = await getUseBiometrics();
 
       if (biometricsEnabled) {
-        // Keep tokens + stored user; just clear in-memory user.
+        await clearStoredAccessToken();
       } else {
         await clearStoredUser();
         await clearStoredTokens();
       }
+      setAuthRequestTraceActive(false);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -346,6 +390,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setHasSeenOnboardingState(true);
   };
 
+  const clearAllAuthStorage = useCallback(async () => {
+    await clearStoredUser();
+    await clearStoredTokens();
+    await clearSessionNotice();
+    await clearHasSeenOnboarding();
+    await clearUseBiometrics();
+    await clearThemePreference();
+    clearCachedEmployeeProfile();
+    clearNewsFeedCache();
+    clearApiBaseUrlOverride();
+    clearRoutesConfigCache();
+    clearTaskCache();
+  }, []);
+
+  const finalizeClearedAuthState = useCallback(() => {
+    setUser(null);
+    setHasSeenOnboardingState(false);
+    setIsBiometricAvailable(false);
+    setIsLoading(false);
+  }, []);
+
+  const clearAllAuthData = useCallback(async () => {
+    await clearAllAuthStorage();
+    setAuthRequestTraceActive(false);
+    finalizeClearedAuthState();
+  }, [clearAllAuthStorage, finalizeClearedAuthState]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -366,6 +437,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // @ts-ignore
       enableBiometrics,
       // @ts-ignore
+      clearAllAuthStorage,
+      // @ts-ignore
+      finalizeClearedAuthState,
+      // @ts-ignore
+      clearAllAuthData,
+      // @ts-ignore
       resumeWithTokens,
     }),
     [
@@ -376,6 +453,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       getValidAccessToken,
       isBiometricAvailable,
       resumeWithTokens,
+      clearAllAuthStorage,
+      finalizeClearedAuthState,
+      clearAllAuthData,
     ],
   );
 

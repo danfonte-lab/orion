@@ -5,11 +5,17 @@ import axios, {
 import { expireSession, SessionExpiredError } from "@/src/auth/auth-session";
 import { captureException } from "@/src/monitoring/sentry";
 
-import { getStoredTokens, setStoredTokens } from "../auth/auth-storage";
-
-const API_URL = (process.env.EXPO_PUBLIC_API_URL || "").replace(/\/+$/, "");
+import {
+  getStoredRefreshToken,
+  getStoredTokens,
+  setStoredTokens,
+} from "../auth/auth-storage";
+import { resolveApiBaseUrl } from "./apiBaseUrl";
 const API_KEY = process.env.EXPO_PUBLIC_API_KEY || "";
 const CSRF_TOKEN = process.env.EXPO_PUBLIC_CSRF_TOKEN || "";
+const AUTH_REQUEST_TRACE_ENABLED =
+  process.env.EXPO_PUBLIC_AUTH_REQUEST_TRACE === "true";
+let authRequestTraceActive = false;
 
 const PUBLIC_URL_PATHS = ["/mobile/login/", "/mobile/token/refresh/"];
 
@@ -43,7 +49,7 @@ function setHeader(
   value: string,
 ) {
   if (!config.headers) {
-    config.headers = {};
+    config.headers = {} as InternalAxiosRequestConfig["headers"];
   }
   if (typeof config.headers.set === "function") {
     config.headers.set(key, value);
@@ -60,8 +66,34 @@ function hasHeader(config: InternalAxiosRequestConfig, key: string): boolean {
   return Boolean((config.headers as Record<string, string>)[key]);
 }
 
+function safeSerialize(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value === "string") return value;
+
+  try {
+    const serialized = JSON.stringify(value);
+    return serialized.length > 1500
+      ? `${serialized.slice(0, 1500)}...`
+      : serialized;
+  } catch {
+    return "[unserializable]";
+  }
+}
+
+function traceAuthRequest(message: string, payload?: Record<string, unknown>) {
+  if (!AUTH_REQUEST_TRACE_ENABLED || !authRequestTraceActive) return;
+  if (payload) {
+    console.log(`[auth-http] ${message}`, payload);
+    return;
+  }
+  console.log(`[auth-http] ${message}`);
+}
+
+export function setAuthRequestTraceActive(active: boolean): void {
+  authRequestTraceActive = active;
+}
+
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_URL,
 });
 
 const ACCESS_TOKEN_TTL_MS = 60_000;
@@ -73,16 +105,13 @@ async function requestTokenRefresh(): Promise<{
   accessToken: string;
   refreshToken: string;
 }> {
-  if (!API_URL) {
-    throw new Error("EXPO_PUBLIC_API_URL is not set");
-  }
-  const tokens = await getStoredTokens();
-  const refreshToken = tokens?.refreshToken;
+  const refreshToken = await getStoredRefreshToken();
   if (!refreshToken) {
     throw new Error("Missing refresh token");
   }
+  const baseURL = await resolveApiBaseUrl();
   const res = await axios.post(
-    `${API_URL}/mobile/token/refresh/`,
+    `${baseURL}/mobile/token/refresh/`,
     { refresh: refreshToken },
     {
       headers: {
@@ -122,6 +151,8 @@ async function getRefreshedTokens(): Promise<{
 
 apiClient.interceptors.request.use(
   async (config): Promise<InternalAxiosRequestConfig> => {
+    const baseURL = await resolveApiBaseUrl();
+    config.baseURL = baseURL;
     setHeader(config, "Accept", "application/json");
     if (config.data != null && !hasHeader(config, "Content-Type")) {
       setHeader(config, "Content-Type", "application/json");
@@ -129,9 +160,18 @@ apiClient.interceptors.request.use(
     if (API_KEY) setHeader(config, "x-api-key", API_KEY);
     if (CSRF_TOKEN) setHeader(config, "X-CSRFTOKEN", CSRF_TOKEN);
 
-    const baseURL = config.baseURL || API_URL;
+    const requestBaseURL = config.baseURL;
     const url = config.url || "";
-    if (baseURL && url && !isPublicUrl(url, baseURL)) {
+    if (AUTH_REQUEST_TRACE_ENABLED) {
+      traceAuthRequest("request", {
+        method: (config.method || "get").toUpperCase(),
+        url,
+        baseURL,
+        params: config.params ?? null,
+        data: safeSerialize(config.data),
+      });
+    }
+    if (requestBaseURL && url && !isPublicUrl(url, requestBaseURL)) {
       const tokens = await getStoredTokens();
       const accessToken = tokens?.accessToken;
       if (accessToken && !hasHeader(config, "Authorization")) {
@@ -144,7 +184,17 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (AUTH_REQUEST_TRACE_ENABLED) {
+      traceAuthRequest("response", {
+        method: (response.config.method || "get").toUpperCase(),
+        url: response.config.url || "",
+        status: response.status,
+        data: safeSerialize(response.data),
+      });
+    }
+    return response;
+  },
   async (error) => {
     if (!axios.isAxiosError(error)) {
       captureException(error, {
@@ -166,11 +216,20 @@ apiClient.interceptors.response.use(
     }
 
     const status = response.status;
-    const baseURL = originalConfig.baseURL || API_URL;
+    const requestBaseURL = originalConfig.baseURL;
     const url = originalConfig.url || "";
-    const isPublic = baseURL && url ? isPublicUrl(url, baseURL) : false;
+    const isPublic = requestBaseURL && url ? isPublicUrl(url, requestBaseURL) : false;
 
     const isAuthFailure = (status === 401 || status === 403) && !isPublic;
+
+    if (AUTH_REQUEST_TRACE_ENABLED) {
+      traceAuthRequest("error", {
+        method: (originalConfig.method || "get").toUpperCase(),
+        url,
+        status,
+        data: safeSerialize(response.data),
+      });
+    }
 
     if (isAuthFailure && !originalConfig._retry) {
       originalConfig._retry = true;

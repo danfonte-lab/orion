@@ -99,6 +99,9 @@ type TeamScheduleApiResponse = {
 
 const OFF_STATUS_CODES = new Set(["OFF", "RD", "REST"]);
 const PTO_STATUS_CODES = new Set(["PTO", "LOA", "MAL", "PAL", "PRM", "SUS"]);
+const SCHEDULE_DEBUG_ENABLED =
+  process.env.EXPO_PUBLIC_SCHEDULE_DEBUG === "true" ||
+  (process.env.EXPO_PUBLIC_ENV ? process.env.EXPO_PUBLIC_ENV !== "PROD" : false);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -166,15 +169,33 @@ function safeString(value: unknown): string | undefined {
   return next.length > 0 ? next : undefined;
 }
 
+function formatClockTime(hours: number, minutes: number): string {
+  const period = hours >= 12 ? "PM" : "AM";
+  const normalizedHours = hours % 12 || 12;
+  return `${normalizedHours}:${String(minutes).padStart(2, "0")} ${period}`;
+}
+
 function formatTimeValue(value?: string | null): string | undefined {
   const raw = safeString(value);
   if (!raw) return undefined;
 
-  const hhmmss = raw.match(/^(\d{2}:\d{2})(?::\d{2})?$/);
-  if (hhmmss) return hhmmss[1];
+  const hhmmss = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (hhmmss) {
+    const hours = Number(hhmmss[1]);
+    const minutes = Number(hhmmss[2]);
+    if (Number.isInteger(hours) && Number.isInteger(minutes)) {
+      return formatClockTime(hours, minutes);
+    }
+  }
 
-  const isoTime = raw.match(/T(\d{2}:\d{2})(?::\d{2})?/);
-  if (isoTime) return isoTime[1];
+  const isoTime = raw.match(/T(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (isoTime) {
+    const hours = Number(isoTime[1]);
+    const minutes = Number(isoTime[2]);
+    if (Number.isInteger(hours) && Number.isInteger(minutes)) {
+      return formatClockTime(hours, minutes);
+    }
+  }
 
   return raw;
 }
@@ -378,7 +399,7 @@ function mergeTeamMembers(
   };
 }
 
-function extractTimesheets(payload: unknown): ApiTimesheet[] {
+function extractTeamTimesheets(payload: unknown): ApiTimesheet[] {
   if (Array.isArray(payload)) {
     return payload.filter((entry) => isRecord(entry)) as ApiTimesheet[];
   }
@@ -395,6 +416,54 @@ function extractTimesheets(payload: unknown): ApiTimesheet[] {
 
   if (isRecord(data.employee) && safeString((data.employee as ApiTimesheet).shift_date)) {
     return [data.employee as ApiTimesheet];
+  }
+
+  return [];
+}
+
+function extractPersonalTimesheets(
+  payload: unknown,
+  employeeId?: string,
+): ApiTimesheet[] {
+  if (Array.isArray(payload)) {
+    return payload.filter((entry) => isRecord(entry)) as ApiTimesheet[];
+  }
+
+  if (!isRecord(payload)) return [];
+
+  const data = payload as EmployeeScheduleApiResponse;
+
+  if (isRecord(data.employee) && safeString((data.employee as ApiTimesheet).shift_date)) {
+    return [data.employee as ApiTimesheet];
+  }
+
+  const weeks = data.weeks ?? [];
+  const schedulesFromWeeks = weeks.flatMap((week) => {
+    const weekSchedules = week.schedules ?? [];
+    const agents = Array.isArray((week as ApiTeamWeek).agents)
+      ? (week as ApiTeamWeek).agents ?? []
+      : [];
+    const agentSchedules = agents.flatMap((agent) =>
+      Array.isArray(agent.schedules) && agent.schedules.length > 0 ? agent.schedules : [agent],
+    );
+
+    return [...weekSchedules, ...agentSchedules];
+  });
+  if (schedulesFromWeeks.length > 0) {
+    const normalizedEmployeeId = safeString(employeeId);
+    if (!normalizedEmployeeId) return schedulesFromWeeks;
+
+    const matchedSchedules = schedulesFromWeeks.filter(
+      (item) => safeString(item.employee_id) === normalizedEmployeeId,
+    );
+    if (SCHEDULE_DEBUG_ENABLED) {
+      console.log("[schedule:personal] matched personal schedules", {
+        employeeId: normalizedEmployeeId,
+        totalSchedules: schedulesFromWeeks.length,
+        matchedSchedules: matchedSchedules.length,
+      });
+    }
+    return matchedSchedules;
   }
 
   return [];
@@ -448,6 +517,24 @@ async function fetchSchedulePayload(
     const response = await apiClient.get<unknown>(API_ENDPOINT, {
       params: { search_date: searchDate },
     });
+    if (SCHEDULE_DEBUG_ENABLED) {
+      const data = isRecord(response.data) ? response.data : null;
+      const weeks = data && Array.isArray((data as { weeks?: unknown }).weeks)
+        ? ((data as { weeks: unknown[] }).weeks)
+        : [];
+      const firstWeek = weeks.length > 0 && isRecord(weeks[0]) ? weeks[0] : null;
+
+      console.log("[schedule:personal] /mobile/api/schedule response", {
+        searchDate,
+        response: response.data,
+      });
+      console.log("[schedule:personal] response shape", {
+        topLevelKeys: data ? Object.keys(data) : [],
+        weeksLength: weeks.length,
+        firstWeekKeys: firstWeek ? Object.keys(firstWeek) : [],
+        firstWeek,
+      });
+    }
     return response.data;
   } catch (error) {
     if (isAxiosError(error) && error.response?.status === 400) {
@@ -507,7 +594,7 @@ async function fetchTeamSchedulePayload(searchDate: string): Promise<TeamSchedul
 
 export async function getWeekSchedule(
   weekStartDate: Date,
-  options?: { employeeId?: string },
+  options?: { employeeId?: string; source?: "personal" | "team" },
 ): Promise<WeekScheduleResponse> {
   const weekStart = startOfWeekMonday(weekStartDate);
   const weekEnd = addDays(weekStart, 6);
@@ -518,8 +605,15 @@ export async function getWeekSchedule(
   const currentWeekStartIso = toIsoDay(startOfWeekMonday(today));
   const searchDate = weekStartIso === currentWeekStartIso ? todayIso : weekStartIso;
 
-  const payload = await fetchSchedulePayload(searchDate, weekStartIso, options?.employeeId);
-  const timesheets = extractTimesheets(payload);
+  const payload = await fetchSchedulePayload(
+    searchDate,
+    weekStartIso,
+    options?.source === "team" ? options?.employeeId : undefined,
+  );
+  const timesheets =
+    options?.source === "team"
+      ? extractTeamTimesheets(payload)
+      : extractPersonalTimesheets(payload, options?.employeeId);
 
   const startMs = weekStart.getTime();
   const endMs = weekEnd.getTime();

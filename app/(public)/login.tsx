@@ -18,13 +18,13 @@ import { useScreenView } from "@/src/analytics/useScreenView";
 import {
   clearSessionNotice,
   getSessionNotice,
+  getStoredRefreshToken,
   getStoredTokens,
   getStoredUser,
   hasBiometricsPreference,
 } from "@/src/auth/auth-storage";
 import { useAuth } from "@/src/auth/AuthContext";
 import { captureException } from "@/src/monitoring/sentry";
-import * as Sentry from "@sentry/react-native";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useEffect, useState } from "react";
 import appJson from "../../app.json";
@@ -103,6 +103,7 @@ export default function LoginScreen() {
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>(EMPTY_FIELD_ERRORS);
   const [showPassword, setShowPassword] = useState(false);
+  const [canUseBiometricSignIn, setCanUseBiometricSignIn] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -125,6 +126,23 @@ export default function LoginScreen() {
       captureException(e, {
         scope: "login_screen",
         action: "load_session_notice",
+      });
+    });
+
+    const loadBiometricAvailability = async () => {
+      const [prefersBiometrics, refreshToken] = await Promise.all([
+        hasBiometricsPreference(),
+        getStoredRefreshToken(),
+      ]);
+
+      if (!mounted) return;
+      setCanUseBiometricSignIn(prefersBiometrics && Boolean(refreshToken));
+    };
+
+    loadBiometricAvailability().catch((e) => {
+      captureException(e, {
+        scope: "login_screen",
+        action: "load_biometric_availability",
       });
     });
 
@@ -284,8 +302,8 @@ export default function LoginScreen() {
         await getStoredUser(),
       );
 
-      const ok = await auth.resumeWithTokens?.();
-      console.debug("biometric: resumeWithTokens returned", ok);
+      const result = await auth.resumeWithTokens?.();
+      console.debug("biometric: resumeWithTokens returned", result);
       console.debug(
         "biometric: after resume - storedTokens=",
         await getStoredTokens(),
@@ -295,9 +313,23 @@ export default function LoginScreen() {
         await getStoredUser(),
       );
 
-      if (!ok) {
+      if (!result?.ok) {
+        const biometricErrorMessage = {
+          refresh_failed:
+            "Your biometric session expired. Please sign in with your username and password to enable biometrics again.",
+          missing_refresh_token:
+            "We couldn't find a valid biometric session on this device. Please sign in with your username and password.",
+          missing_user:
+            "We couldn't restore your account for biometric sign-in. Please sign in with your username and password.",
+          biometrics_disabled:
+            "Biometric sign-in is turned off for this account. Please sign in with your username and password.",
+        } as const;
+        const reason = result?.reason as keyof typeof biometricErrorMessage | undefined;
+
         setError(
-          "We couldn't resume your session. Please sign in with your username and password.",
+          reason
+            ? biometricErrorMessage[reason]
+            : "We couldn't resume your session. Please sign in with your username and password.",
         );
         return;
       }
@@ -315,11 +347,6 @@ export default function LoginScreen() {
       });
       setError("Biometric sign-in failed.");
     }
-  };
-
-  const sendSentryTestMessage = () => {
-    Sentry.captureMessage("Sentry test message from Expo SDK 54");
-    Alert.alert("Sentry", "Test message sent.");
   };
 
   return (
@@ -441,7 +468,7 @@ export default function LoginScreen() {
             />
           </View>
 
-          {auth.isBiometricAvailable ? (
+          {auth.isBiometricAvailable && canUseBiometricSignIn ? (
             <View className="mt-4">
               <PrimaryButton
                 title="Sign in with biometrics"

@@ -3,12 +3,14 @@ import { useIsFocused } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   GestureResponderEvent,
   Image,
   Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Easing,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -31,6 +33,7 @@ import {
   type NewsFeedPreview,
   updateReaction,
 } from "@/src/services/newsFeedService";
+import { LinearGradient } from "expo-linear-gradient";
 import { useVideoPlayer, VideoView } from "expo-video";
 import * as VideoThumbnails from "expo-video-thumbnails";
 
@@ -160,6 +163,58 @@ function applyReactionLocally(
   };
 }
 
+function MediaSkeleton({ className }: { className?: string }) {
+  const shimmer = React.useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(shimmer, {
+        toValue: 1,
+        duration: 1800,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    );
+
+    animation.start();
+    return () => {
+      animation.stop();
+    };
+  }, [shimmer]);
+
+  const translateX = shimmer.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-260, 260],
+  });
+
+  return (
+    <View
+      className={`absolute inset-0 overflow-hidden rounded-xl bg-neutral-200/55 dark:bg-neutral-800/55 ${className ?? ""}`}
+      pointerEvents="none"
+    >
+      <View className="absolute inset-0 bg-primary/3 dark:bg-white/4" />
+      <Animated.View
+        style={[
+          {
+            transform: [{ translateX }],
+            width: 190,
+            height: "100%",
+            opacity: 0.55,
+          },
+        ]}
+        className="absolute"
+      >
+        <LinearGradient
+          colors={["transparent", "rgba(255,255,255,0.42)", "transparent"]}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={{ flex: 1 }}
+        />
+      </Animated.View>
+    </View>
+  );
+}
+
 function AttachmentPreview({
   attachment,
   className,
@@ -181,6 +236,8 @@ function AttachmentPreview({
   const videoPreviewUri = getVideoPreviewUrl(attachment);
   const [generatedVideoPreviewUri, setGeneratedVideoPreviewUri] = useState<string | null>(null);
   const [isInlineVideoPlaying, setIsInlineVideoPlaying] = useState(false);
+  const [isMediaLoading, setIsMediaLoading] = useState(true);
+  const imageOpacity = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let isMounted = true;
@@ -239,6 +296,11 @@ function AttachmentPreview({
   const canPlayInlineVideo = Boolean(isVideo && videoUri && allowInlineVideoPlayback);
 
   useEffect(() => {
+    setIsMediaLoading(Boolean(previewSource));
+    imageOpacity.setValue(0);
+  }, [imageOpacity, previewSource]);
+
+  useEffect(() => {
     if (!isScreenFocused) {
       setIsInlineVideoPlaying(false);
     }
@@ -259,10 +321,36 @@ function AttachmentPreview({
       disabled={!onPress}
       className={`relative overflow-hidden rounded-xl bg-primary/5 ${className}`}
     >
+      {!isInlineVideoPlaying && isMediaLoading ? <MediaSkeleton /> : null}
       {isInlineVideoPlaying && canPlayInlineVideo ? (
         <InlineVideoPlayer videoUri={videoUri} />
       ) : hasPreviewImage ? (
-        <Image source={{ uri: previewSource }} className="h-full w-full" resizeMode="cover" />
+        <View className="h-full w-full">
+          <Animated.Image
+            source={{ uri: previewSource }}
+            className="h-full w-full"
+            resizeMode="cover"
+            style={{ opacity: imageOpacity }}
+            onLoadStart={() => {
+              setIsMediaLoading(true);
+            }}
+            onLoad={() => {
+              Animated.timing(imageOpacity, {
+                toValue: 1,
+                duration: 320,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true,
+              }).start(({ finished }) => {
+                if (finished) {
+                  setIsMediaLoading(false);
+                }
+              });
+            }}
+            onError={() => {
+              setIsMediaLoading(false);
+            }}
+          />
+        </View>
       ) : (
         <View className="h-full w-full items-center justify-center border border-primary/10">
           <Text className="font-sans text-xs text-neutral-soft dark:text-neutral-soft-dark">

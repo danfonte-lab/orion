@@ -7,7 +7,10 @@ import { User } from "../models/user";
 const KEYS = {
   user: "auth.user",
   hasSeenOnboarding: "onboarding.hasSeenOnboarding",
-  tokens: "auth.tokens",
+  accessToken: "auth.accessToken",
+  accessTokenExpiry: "auth.accessTokenExpiry",
+  refreshToken: "auth.refreshToken",
+  legacyTokens: "auth.tokens",
   useBiometrics: "auth.useBiometrics",
   sessionNotice: "auth.sessionNotice",
   themePreference: "app.themePreference",
@@ -89,24 +92,77 @@ export type Tokens = {
   accessTokenExpiry: number;
 };
 
-export async function getStoredTokens(): Promise<Tokens | null> {
-  const raw = await getItemAsync(KEYS.tokens);
+type LegacyTokens = Partial<Tokens>;
+
+async function readLegacyTokens(): Promise<LegacyTokens | null> {
+  const raw = await getItemAsync(KEYS.legacyTokens);
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as Tokens;
+    return JSON.parse(raw) as LegacyTokens;
   } catch {
-    await deleteItemAsync(KEYS.tokens);
+    await deleteItemAsync(KEYS.legacyTokens);
     return null;
   }
 }
 
+export async function getStoredTokens(): Promise<Tokens | null> {
+  const [accessToken, refreshToken, accessTokenExpiry] = await Promise.all([
+    getStoredAccessToken(),
+    getStoredRefreshToken(),
+    getStoredAccessTokenExpiry(),
+  ]);
+
+  if (!accessToken || !refreshToken || !accessTokenExpiry) return null;
+
+  return {
+    accessToken,
+    refreshToken,
+    accessTokenExpiry,
+  };
+}
+
 export async function setStoredTokens(tokens: Tokens): Promise<void> {
-  await setItemAsync(KEYS.tokens, JSON.stringify(tokens));
+  await Promise.all([
+    setItemAsync(KEYS.accessToken, tokens.accessToken),
+    setItemAsync(KEYS.refreshToken, tokens.refreshToken),
+    setItemAsync(KEYS.accessTokenExpiry, String(tokens.accessTokenExpiry)),
+    deleteItemAsync(KEYS.legacyTokens),
+  ]);
+}
+
+export async function getStoredAccessToken(): Promise<string | null> {
+  return getItemAsync(KEYS.accessToken);
+}
+
+export async function getStoredRefreshToken(): Promise<string | null> {
+  const raw = await getItemAsync(KEYS.refreshToken);
+  if (raw) return raw;
+
+  const legacy = await readLegacyTokens();
+  return legacy?.refreshToken ?? null;
+}
+
+export async function getStoredAccessTokenExpiry(): Promise<number | null> {
+  const raw = await getItemAsync(KEYS.accessTokenExpiry);
+  if (raw && !Number.isNaN(Number(raw))) return Number(raw);
+  return null;
+}
+
+export async function clearStoredAccessToken(): Promise<void> {
+  await Promise.all([
+    deleteItemAsync(KEYS.accessToken),
+    deleteItemAsync(KEYS.accessTokenExpiry),
+  ]);
 }
 
 export async function clearStoredTokens(): Promise<void> {
-  await deleteItemAsync(KEYS.tokens);
+  await Promise.all([
+    deleteItemAsync(KEYS.accessToken),
+    deleteItemAsync(KEYS.accessTokenExpiry),
+    deleteItemAsync(KEYS.refreshToken),
+    deleteItemAsync(KEYS.legacyTokens),
+  ]);
 }
 
 export async function getSessionNotice(): Promise<string | null> {

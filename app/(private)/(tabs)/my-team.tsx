@@ -5,26 +5,7 @@ import ScheduleView from "@/components/schedule/schedule-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useScreenView } from "@/src/analytics/useScreenView";
 import { isSessionExpiredError } from "@/src/auth/auth-session";
-import {
-  getRoutesConfig,
-  type RouteConfigItem,
-} from "@/src/services/accessControlService";
-import {
-  getEmployeeOrgChart,
-  type OrgChartPerson,
-} from "@/src/services/teamService";
-
-const TEAM_VIEW_PERMISSION = "tl_schedule_view_access";
-
-function normalizeValue(value?: string | null): string {
-  return (value ?? "").trim().toLowerCase();
-}
-
-function hasTeamAccess(routesConfig: RouteConfigItem[]): boolean {
-  return routesConfig.some(
-    (item) => normalizeValue(item.allowed_permission) === TEAM_VIEW_PERMISSION,
-  );
-}
+import { getEmployeeOrgChart, type OrgChartPerson } from "@/src/services/teamService";
 
 function getFullName(person: OrgChartPerson): string {
   if (person.full_name?.trim()) return person.full_name.trim();
@@ -48,7 +29,6 @@ export default function MyTeamScreen() {
   const [directReports, setDirectReports] = useState<OrgChartPerson[]>([]);
   const [selectedReport, setSelectedReport] = useState<OrgChartPerson | null>(null);
   const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
-  const [canViewTeamTab, setCanViewTeamTab] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,16 +37,6 @@ export default function MyTeamScreen() {
     setError(null);
 
     try {
-      const routesConfig = await getRoutesConfig(true);
-      const canViewTeam = hasTeamAccess(routesConfig);
-
-      setCanViewTeamTab(canViewTeam);
-      if (!canViewTeam) {
-        setManager(null);
-        setDirectReports([]);
-        return;
-      }
-
       const orgChartResponse = await getEmployeeOrgChart(true);
 
       setManager(orgChartResponse.manager ?? null);
@@ -88,6 +58,7 @@ export default function MyTeamScreen() {
       <ScheduleView
         title={getFullName(selectedReport)}
         employeeId={selectedReport.employee_id ?? undefined}
+        scheduleSource="team"
         onBack={() => setSelectedReport(null)}
       />
     );
@@ -118,15 +89,7 @@ export default function MyTeamScreen() {
         </View>
       ) : null}
 
-      {!isLoading && !error && !canViewTeamTab ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center font-sans text-sm text-neutral-soft dark:text-neutral-soft-dark">
-            You do not currently have access to view direct report schedules.
-          </Text>
-        </View>
-      ) : null}
-
-      {!isLoading && !error && canViewTeamTab ? (
+      {!isLoading && !error ? (
         <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 20 }}>
           {manager ? (
             <View className="mb-2 rounded-2xl border border-neutral-dark/10 bg-surface-light p-4 dark:border-white/10 dark:bg-surface-dark">

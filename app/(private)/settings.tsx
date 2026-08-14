@@ -1,7 +1,7 @@
 import { useColorScheme, useThemePreference } from "@/hooks/use-color-scheme";
 import { Colors } from "@/constants/theme";
 import { useScreenView } from "@/src/analytics/useScreenView";
-import { deleteAllItemAsync, getUseBiometrics } from "@/src/auth/auth-storage";
+import { getUseBiometrics } from "@/src/auth/auth-storage";
 import { useAuth } from "@/src/auth/AuthContext";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useRouter } from "expo-router";
@@ -11,7 +11,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
   useScreenView("settings");
-  const { isBiometricAvailable, enableBiometrics, logout } = useAuth() as any;
+  const {
+    isBiometricAvailable,
+    enableBiometrics,
+    clearAllAuthStorage,
+    finalizeClearedAuthState,
+  } = useAuth() as any;
   const colorScheme = useColorScheme();
   const { preference, setPreference } = useThemePreference();
   const [value, setValue] = useState<boolean>(!!isBiometricAvailable);
@@ -78,9 +83,19 @@ export default function SettingsScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteAllItemAsync();
-              await logout?.();
-              router.replace("/(public)/onboarding");
+              await clearAllAuthStorage?.();
+              Alert.alert(
+                "Data cleared",
+                "All stored data has been removed. You will be sent back to onboarding.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      finalizeClearedAuthState?.();
+                    },
+                  },
+                ],
+              );
             } catch {
               Alert.alert("Error", "Failed to clear stored data.");
             }

@@ -1,18 +1,15 @@
 /*
  * authService.tsx
  *
- * Provides a small wrapper to authenticate a user against the API defined
- * by EXPO_PUBLIC_API_URL in the project's environment. The function below
- * POSTs to /auth/login and returns the normalized user + tokens shape used
- * elsewhere in the app.
+ * Provides a small wrapper to authenticate a user against the API resolved
+ * by the shared API base URL helper. The function below POSTs to /auth/login
+ * and returns the normalized user + tokens shape used elsewhere in the app.
  */
 
 import { isAxiosError } from "axios";
 import { captureException } from "@/src/monitoring/sentry";
 import { User } from "../models/user";
 import apiClient from "./apiClient";
-
-const API_URL = (process.env.EXPO_PUBLIC_API_URL || "").replace(/\/+$/, "");
 
 type LoginResponse = {
   user?: User;
@@ -103,6 +100,52 @@ function createDetailedError(message: string, details?: string): Error {
   return err;
 }
 
+function normalizeSpaces(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function hasHardLockoutSignal(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("account locked") ||
+    normalized.includes("locked account") ||
+    normalized.includes("temporarily locked") ||
+    normalized.includes("suspended") ||
+    normalized.includes("disabled") ||
+    normalized.includes("blocked")
+  );
+}
+
+function hasAttemptWarning(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("login attempts") ||
+    normalized.includes("failed attempts") ||
+    (normalized.includes("used ") &&
+      normalized.includes("out of") &&
+      normalized.includes("attempt")) ||
+    /you have used\s+\d+\s+out of\s+\d+\s+login attempts?/i.test(message) ||
+    /after\s+\d+\s+attempts?,\s+your account will be locked/i.test(message)
+  );
+}
+
+function summarizeAttemptWarning(message: string): string {
+  const normalized = normalizeSpaces(message);
+  const match = normalized.match(
+    /you have used\s+(\d+)\s+out of\s+(\d+)\s+login attempts?/i,
+  );
+  if (match) {
+    return `You have used ${match[1]} out of ${match[2]} login attempts. After ${match[2]} failed attempts, the account will be locked.`;
+  }
+
+  const fallback = normalized.match(/after\s+\d+\s+attempts?,\s+your account will be locked/i);
+  if (fallback) {
+    return "After several failed attempts, the account will be locked.";
+  }
+
+  return normalized;
+}
+
 function mapLoginError(error: unknown): Error {
   if (!isAxiosError(error)) {
     return error instanceof Error ? error : new Error("Request failed");
@@ -125,9 +168,8 @@ function mapLoginError(error: unknown): Error {
   const looksLikeLockout =
     status === 423 ||
     status === 429 ||
-    normalizedMessage.includes("locked") ||
-    normalizedMessage.includes("too many") ||
-    normalizedMessage.includes("attempt");
+    hasHardLockoutSignal(normalizedMessage) ||
+    (status >= 400 && status < 500 && normalizedMessage.includes("too many"));
   if (looksLikeLockout) {
     return createDetailedError(
       "Access to this account is currently restricted. This may be due to too many failed attempts or regional access policies. Please contact support.",
@@ -136,7 +178,17 @@ function mapLoginError(error: unknown): Error {
   }
 
   if (status === 400 || status === 401 || status === 403) {
-    return createDetailedError("Invalid username or password", apiMessage);
+    if (apiMessage && hasAttemptWarning(apiMessage)) {
+      return createDetailedError(
+        "Invalid username or password.",
+        summarizeAttemptWarning(apiMessage),
+      );
+    }
+
+    return createDetailedError(
+      "Invalid username or password.",
+      apiMessage,
+    );
   }
 
   if (status >= 500) {
@@ -161,10 +213,6 @@ export async function authenticate(
   emailOrUsername: string,
   password: string,
 ): Promise<{ user: User; tokens: Tokens }> {
-  if (!API_URL) {
-    throw new Error("EXPO_PUBLIC_API_URL is not set");
-  }
-
   const url = "/mobile/login/";
   let response: LoginResponse = {};
   try {
@@ -197,9 +245,6 @@ export async function authenticate(
 export async function refreshAccessToken(
   refreshToken: string,
 ): Promise<{ accessToken: string; refreshToken: string }> {
-  if (!API_URL) {
-    throw new Error("EXPO_PUBLIC_API_URL is not set");
-  }
   if (!refreshToken) {
     throw new Error("Missing refresh token");
   }
